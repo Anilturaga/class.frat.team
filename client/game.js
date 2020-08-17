@@ -433,7 +433,7 @@ class Game{
 			console.log("Elapsed time= " + Math.round(sinceStart / 1000 * 100) / 100 + " secs @ " + currentFps + " fps.");
 			if (this.sit == 'true') {
 
-				const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Rumba Dancing'];
+				const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Breakdance 1990'];
 				this.player.action = colours[Math.floor(Math.random() * colours.length)];
 				this.sit = 'false';
 			}
