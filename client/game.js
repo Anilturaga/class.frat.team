@@ -1,3 +1,6 @@
+var stop = false;
+var frameCount = 0;
+var fps, fpsInterval, startTime, now, then, elapsed;
 var gate = true;
 class Game{
 	
@@ -196,7 +199,7 @@ class Game{
 				delete game.anims;
 				game.action = "Idle";
 				game.mode = game.modes.ACTIVE;
-				game.animate();
+				game.startAnimating(40);
 			}
 		});	
 	}
@@ -391,50 +394,81 @@ class Game{
 		return players[0];
 	}
 
+	startAnimating(fps) {
+		fpsInterval = 1000 / fps;
+		then = Date.now();
+		startTime = then;
+		console.log(startTime);
+		game.animate();
+	}
+
 	animate() {
 		const game = this;
 		const dt = this.clock.getDelta();
-		
-		requestAnimationFrame( function(){ game.animate(); } );
-		this.updateRemotePlayers(dt);
-		
-		if(this.sit == 'true')
-		{
 
-			const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Rumba Dancing'];
-			this.player.action = colours[Math.floor(Math.random()*colours.length)];
-			this.sit = 'false';
+		if (stop) {
+			return;
 		}
-		if (this.player.mixer!=undefined && this.mode==this.modes.ACTIVE) this.player.mixer.update(dt);
-		
-		if (this.player.action=='Walking'){
-			const elapsedTime = Date.now() - this.player.actionTime;
-			if (elapsedTime>1000 && this.player.motion.forward>0){
-				this.player.action = 'Running';
+
+		requestAnimationFrame(function () { game.animate(); });
+		this.updateRemotePlayers(dt);
+
+		now = Date.now();
+		elapsed = now - then;
+
+		// if enough time has elapsed, draw the next frame
+
+		if (elapsed > fpsInterval) {
+
+			// Get ready for next frame by setting then=now, but...
+			// Also, adjust for fpsInterval not being multiple of 16.67
+			then = now - (elapsed % fpsInterval);
+
+			// draw stuff here
+
+
+			// TESTING...Report #seconds since start and achieved fps.
+			var sinceStart = now - startTime;
+			var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
+			console.log("Elapsed time= " + Math.round(sinceStart / 1000 * 100) / 100 + " secs @ " + currentFps + " fps.");
+			if (this.sit == 'true') {
+
+				const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Breakdance 1990'];
+				this.player.action = colours[Math.floor(Math.random() * colours.length)];
+				this.sit = 'false';
 			}
-		}
-		
-		if (this.player.motion !== undefined) this.player.move(dt);
-		
-		if (this.cameras!=undefined && this.cameras.active!=undefined && this.player!==undefined && this.player.object!==undefined){
-			this.camera.position.lerp(this.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05);
-			const pos = this.player.object.position.clone();
-			if (this.cameras.active==this.cameras.chat){
-				pos.y += 200;
-			}else{
-				pos.y += 300;
+			if (this.player.mixer != undefined && this.mode == this.modes.ACTIVE) this.player.mixer.update(dt);
+
+			if (this.player.action == 'Walking') {
+				const elapsedTime = Date.now() - this.player.actionTime;
+				if (elapsedTime > 1000 && this.player.motion.forward > 0) {
+					this.player.action = 'Running';
+				}
 			}
-			this.camera.lookAt(pos);
+
+			if (this.player.motion !== undefined) this.player.move(dt);
+
+			if (this.cameras != undefined && this.cameras.active != undefined && this.player !== undefined && this.player.object !== undefined) {
+				this.camera.position.lerp(this.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05);
+				const pos = this.player.object.position.clone();
+				if (this.cameras.active == this.cameras.chat) {
+					pos.y += 200;
+				} else {
+					pos.y += 300;
+				}
+				this.camera.lookAt(pos);
+			}
+
+			if (this.sun !== undefined) {
+				this.sun.position.copy(this.camera.position);
+				this.sun.position.y += 10;
+			}
+
+			if (this.speechBubble !== undefined) this.speechBubble.show(this.camera.position);
+
+			this.renderer.render(this.scene, this.camera);
+
 		}
-		
-		if (this.sun !== undefined){
-			this.sun.position.copy( this.camera.position );
-			this.sun.position.y += 10;
-		}
-		
-		if (this.speechBubble!==undefined) this.speechBubble.show(this.camera.position);
-	
-		this.renderer.render( this.scene, this.camera );		
 	}
 }
 
