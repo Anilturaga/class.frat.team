@@ -54,7 +54,7 @@ nsp.on('connection', function (socket) {
 			if (pack.length > 0) io.in(socket.room).emit('remoteData', pack);
 		}
 		catch (e) {
-			console.log(e);
+			//console.log(e);
 		}
 	}, 40);
 
