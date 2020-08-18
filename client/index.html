@@ -11,7 +11,11 @@
 	<meta property="og:type" content="product" />
 	<meta property="og:title" content="Blockland - a multi-player game" />
 	<link href="https://fonts.googleapis.com/css2?family=Bungee+Inline&display=swap" rel="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel ="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" rel = "stylesheet">
+    <link href="button.css" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izimodal/1.5.1/css/iziModal.min.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<!-- The core Firebase JS SDK is always required and must be listed first -->
 	<script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-app.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-auth.js"></script>
@@ -22,14 +26,13 @@
 
 	<script>
 		// Your web app's Firebase configuration
-		
 		// Initialize Firebase
 		firebase.initializeApp(firebaseConfig);
 		if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
 			// Do Firefox-related activities
 			alert("Not working on Firefox. Try using Chrome while we fix this!")
 		}
-		
+
 	</script>
 	<style>
 		body {
@@ -40,6 +43,7 @@
 			overflow: hidden;
 			width: 100%;
 			height: 100%;
+
 		}
 
 		#message {
@@ -188,8 +192,7 @@
 			box-shadow: 0 0 4px #999;
 			outline: none;
 		}
-
-		a {
+		.quizbutton {
 			text-decoration: none;
 			border: none;
 			border-radius: 2px;
@@ -202,7 +205,6 @@
 			box-shadow: 0 0 4px #999;
 			outline: none;
 		}
-
 	</style>
 </head>
 
@@ -238,20 +240,35 @@
 		document.addEventListener("DOMContentLoaded", function () { game = new Game(); });
 	</script>
 
-	<a class="learn-more ripple" id="sit" onClick="javascript:game.toggleAnimation()"
-		ontouchend="javascript:game.toggleAnimation()">Dance</a>
-	<a href="" data-izimodal-open="#modal-youtube" class="ripple videoButton">Video</a>
-	<div id="modal-youtube" class="modais" data-izimodal-transitionin="fadeInDown" data-izimodal-title="Virtual Classroom">
-		<div id="meet"></div>
-	</div>
+<div class="floatingButtonWrap">
+	<div class="floatingButtonInner">
+		<a href="#" class="floatingButton">
+			<i class="fa fa-plus icon-default"></i>
+		</a>
+		<ul class="floatingMenu">
+			<li>
+				<a onClick="javascript:game.toggleAnimation()" ontouchend="javascript:game.toggleAnimation()">Dance</a>
 
-	<a href="" data-izimodal-open="#modal-board" class="ripple boardButton">Board</a>
-	<div id="modal-board" class="modais1" data-izimodal-transitionin="fadeInDown" data-izimodal-title="Virtual Board">
-		<div id="whiteboard"></div>
-		<div class="overlay" id="overlay"></div>
+			</li>
+			<li>
+				<a href="" data-izimodal-open="#modal-youtube">Video</a>
+				<div id="modal-youtube" class="modais" data-izimodal-transitionin="fadeInDown"
+					data-izimodal-title="Virtual Classroom">
+					<div id="meet"></div>
+				</div>
+			</li>
+			<li>
+				<a href="" data-izimodal-open="#modal-board">Board</a>
+				<div id="modal-board" class="modais1" data-izimodal-transitionin="fadeInDown"
+					data-izimodal-title="Virtual Board">
+					<div id="whiteboard"></div>
+					<div class="overlay" id="overlay"></div>
+				</div>
+			</li> 
+		</ul>
 	</div>
-	<a target="_blank" id="view-source" class="ripple viewSource" onclick="hideQuizButton()"
-		ontouchend="hideQuizButton()">Quiz</a>
+</div>
+<a class = "quizbutton ripple viewSource" target="_blank" id="view-source" onclick="hideQuizButton()" ontouchend="hideQuizButton()">Quiz</a>
 	<video id="player" controls autoplay style="display: none;"></video>
 	<canvas id="canvas" width=320 height=240 style="display: none;"></canvas>
 </body>
@@ -310,7 +327,7 @@
 		if (user) {
 			USER_CRED = user;
 			//alert("hey guy")
-			console.log(localStorage.username,"{{{{{{{{{{{{{{{{{")
+			console.log(localStorage.username, "{{{{{{{{{{{{{{{{{")
 			api.executeCommand('displayName', localStorage.getItem("username"));
 			//email = user.email;
 			//photoUrl = user.photoURL;;
@@ -481,6 +498,43 @@
 			console.log(localStorage.att, "predictions")
 		}
 	}
+	$(document).ready(function(){
+        $('.floatingButton').on('click',
+            function(e){
+                e.preventDefault();
+                $(this).toggleClass('open');
+                if($(this).children('.fa').hasClass('fa-plus'))
+                {
+                    $(this).children('.fa').removeClass('fa-plus');
+                    $(this).children('.fa').addClass('fa-close');
+                } 
+                else if ($(this).children('.fa').hasClass('fa-close')) 
+                {
+                    $(this).children('.fa').removeClass('fa-close');
+                    $(this).children('.fa').addClass('fa-plus');
+                }
+                $('.floatingMenu').stop().slideToggle();
+            }
+        );
+        $(this).on('click', function(e) {
+            var container = $(".floatingButton");
+
+            // if the target of the click isn't the container nor a descendant of the container
+            if (!container.is(e.target) && $('.floatingButtonWrap').has(e.target).length === 0) 
+            {
+                if(container.hasClass('open'))
+                {
+                    container.removeClass('open');
+                }
+                if (container.children('.fa').hasClass('fa-close')) 
+                {
+                    container.children('.fa').removeClass('fa-close');
+                    container.children('.fa').addClass('fa-plus');
+                }
+                $('.floatingMenu').hide();
+            }
+        });
+    });
 </script>
 
 </html>
