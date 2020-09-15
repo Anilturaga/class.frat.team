@@ -1,3 +1,6 @@
+var stop = false;
+var frameCount = 0;
+var fps, fpsInterval, startTime, now, then, elapsed;
 var gate = true;
 class Game{
 	
@@ -21,7 +24,8 @@ class Game{
 		this.renderer;
 		this.animations = {};
 		this.assetsPath = 'assets/';
-		this.sit = 'false';
+		this.sit = false;
+		this.greet = false;
 		this.count = 0;
 		
 		this.updateFcts =[];
@@ -45,7 +49,7 @@ class Game{
 		const sfxExt = SFX.supportsAudioType('mp3') ? 'mp3' : 'ogg';
         
 		game = this;
-		this.anims = ['Walking', 'Walking Backwards', 'Turn', 'Running','Breakdance 1990','Rumba Dancing','Hip Hop Dancing'];
+		this.anims = ['Walking', 'Walking Backwards', 'Turn', 'Running','Breakdance 1990','Rumba Dancing','Hip Hop Dancing','Standing Greeting'];
 		
 		const options = {
 			assets:[
@@ -142,7 +146,7 @@ class Game{
 		this.renderer.shadowMap.enabled = true;
 		this.container.appendChild( this.renderer.domElement );		
 		if ('ontouchstart' in window){
-			window.addEventListener( 'touchdown', (event) => game.onMouseDown(event), false );
+			window.addEventListener( 'touchend', (event) => game.onMouseDown(event), false );
 		}else{
 			window.addEventListener( 'mousedown', (event) => game.onMouseDown(event), false );	
 		}
@@ -196,7 +200,7 @@ class Game{
 				delete game.anims;
 				game.action = "Idle";
 				game.mode = game.modes.ACTIVE;
-				game.animate();
+				game.startAnimating(40);
 			}
 		});	
 	}
@@ -216,8 +220,8 @@ class Game{
 				this.player.action = 'Idle';
 			}
 		}
-		console.log("forward and turn values"+forward,turn);
-		if (this.sit == 'false' && forward==0 && turn==0){
+		//console.log("forward and turn values"+forward,turn);
+		if (forward==0 && turn==0){
 			delete this.player.motion;
 		}else{
 			this.player.motion = { forward, turn }; 
@@ -250,7 +254,10 @@ class Game{
 		this.activeCamera = this.cameras.back;	
 	}
 	toggleAnimation(){
-		this.sit = 'true';
+		this.sit = true;
+	}
+	greetingAnimation(){
+		this.greet = true;
 	}
 	
 	showMessage(msg, fontSize=20, onOK=null){
@@ -356,7 +363,8 @@ class Game{
 			const chat = document.getElementById('chat');
 			if (players.length>0){
 				const player = players[0];
-				//console.log(`onMouseDown: player ${player.id}`);
+				//console.log(player);
+				console.log(`onMouseDown: player ${player.id}`);
 				this.speechBubble.player = player;
 				this.speechBubble.update('');
 				this.scene.add(this.speechBubble.mesh);
@@ -364,7 +372,8 @@ class Game{
 				chat.style.bottom = '0px';
 				this.activeCamera = this.cameras.chat;
 			}
-		}else{
+		}
+		else{
 			//Is the chat panel visible?
 			if (chat.style.bottom=='0px' && (window.innerHeight - event.clientY)>40){
 				//console.log("onMouseDown: No player found");
@@ -391,50 +400,85 @@ class Game{
 		return players[0];
 	}
 
+	startAnimating(fps) {
+		fpsInterval = 1000 / fps;
+		then = Date.now();
+		startTime = then;
+		console.log(startTime);
+		game.animate();
+	}
+
 	animate() {
 		const game = this;
 		const dt = this.clock.getDelta();
-		
-		requestAnimationFrame( function(){ game.animate(); } );
-		this.updateRemotePlayers(dt);
-		
-		if(this.sit == 'true')
-		{
 
-			const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Rumba Dancing'];
-			this.player.action = colours[Math.floor(Math.random()*colours.length)];
-			this.sit = 'false';
+		if (stop) {
+			return;
 		}
-		if (this.player.mixer!=undefined && this.mode==this.modes.ACTIVE) this.player.mixer.update(dt);
-		
-		if (this.player.action=='Walking'){
-			const elapsedTime = Date.now() - this.player.actionTime;
-			if (elapsedTime>1000 && this.player.motion.forward>0){
-				this.player.action = 'Running';
+
+		requestAnimationFrame(function () { game.animate(); });
+		this.updateRemotePlayers(dt);
+
+		now = Date.now();
+		elapsed = now - then;
+
+		// if enough time has elapsed, draw the next frame
+
+		if (elapsed > fpsInterval) {
+
+			// Get ready for next frame by setting then=now, but...
+			// Also, adjust for fpsInterval not being multiple of 16.67
+			then = now - (elapsed % fpsInterval);
+
+			// draw stuff here
+
+
+			// TESTING...Report #seconds since start and achieved fps.
+			var sinceStart = now - startTime;
+			var currentFps = Math.round(1000 / (sinceStart / ++frameCount) * 100) / 100;
+			//console.log("Elapsed time= " + Math.round(sinceStart / 1000 * 100) / 100 + " secs @ " + currentFps + " fps.");
+			if (this.sit == true) {
+
+				const colours = ['Hip Hop Dancing', 'Rumba Dancing', 'Rumba Dancing'];
+				this.player.action = colours[Math.floor(Math.random() * colours.length)];
+				this.sit = false;
 			}
-		}
-		
-		if (this.player.motion !== undefined) this.player.move(dt);
-		
-		if (this.cameras!=undefined && this.cameras.active!=undefined && this.player!==undefined && this.player.object!==undefined){
-			this.camera.position.lerp(this.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05);
-			const pos = this.player.object.position.clone();
-			if (this.cameras.active==this.cameras.chat){
-				pos.y += 200;
-			}else{
-				pos.y += 300;
+			if(this.greet == true){
+				this.player.action = 'Standing Greeting';
+				this.greet = false
 			}
-			this.camera.lookAt(pos);
+			if (this.player.mixer != undefined && this.mode == this.modes.ACTIVE) this.player.mixer.update(dt);
+
+			if (this.player.action == 'Walking') {
+				const elapsedTime = Date.now() - this.player.actionTime;
+				if (elapsedTime > 1000 && this.player.motion.forward > 0) {
+					this.player.action = 'Running';
+				}
+			}
+
+			if (this.player.motion !== undefined) this.player.move(dt);
+
+			if (this.cameras != undefined && this.cameras.active != undefined && this.player !== undefined && this.player.object !== undefined) {
+				this.camera.position.lerp(this.cameras.active.getWorldPosition(new THREE.Vector3()), 0.05);
+				const pos = this.player.object.position.clone();
+				if (this.cameras.active == this.cameras.chat) {
+					pos.y += 200;
+				} else {
+					pos.y += 300;
+				}
+				this.camera.lookAt(pos);
+			}
+
+			if (this.sun !== undefined) {
+				this.sun.position.copy(this.camera.position);
+				this.sun.position.y += 10;
+			}
+
+			if (this.speechBubble !== undefined) this.speechBubble.show(this.camera.position);
+
+			this.renderer.render(this.scene, this.camera);
+
 		}
-		
-		if (this.sun !== undefined){
-			this.sun.position.copy( this.camera.position );
-			this.sun.position.y += 10;
-		}
-		
-		if (this.speechBubble!==undefined) this.speechBubble.show(this.camera.position);
-	
-		this.renderer.render( this.scene, this.camera );		
 	}
 }
 
