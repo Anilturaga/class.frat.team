@@ -65,3 +65,6 @@ node_modules/
 .env
 
 .idea
+#custom
+client/indexScript.js
+client/indexScript.min.js
